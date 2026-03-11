@@ -1,0 +1,20 @@
+spring:
+  jpa:
+    show-sql: true
+
+  ai:
+    openai:
+      api-key: ${OPEN_AI_KEY}
+
+app:
+  security:
+    jwt:
+      secret: ${JWT_SECRET}
+    webhook:
+      relab-mfb-secret: ${WEBHOOK_HMAC_SECRET}
+
+logging:
+  level:
+    com.relab.budget: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql: TRACE
