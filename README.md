@@ -114,5 +114,8 @@ See `.env.example` for the full list. The three **required** variables are:
 ```
 http://localhost:8080/api/v1
 ```
-
+## CHECK APP HEALTH
+```curl
+curl http://localhost:8080/actuator/health | python3 -m json.tool
+```
 See the **ReLab Budget API Contract** document for the full endpoint reference.
