@@ -12,6 +12,11 @@ import com.relab.budge_it.advisor.service.AdvisorOrchestrationService;
 import com.relab.budge_it.shared.response.ApiResponse;
 import com.relab.budge_it.shared.response.BusinessException;
 import com.relab.budge_it.shared.security.AuthenticatedUserProvider;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -27,6 +32,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Tag(name = "Advisor", description = "AI-driven budget generation, job tracking, and template management")
+@SecurityRequirement(name = "bearerAuth")
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/advisor")
@@ -50,6 +57,13 @@ public class AdvisorController {
      * Returns 202 Accepted immediately — generation happens asynchronously.
      * Client should poll GET /advisor/jobs/{jobId} or subscribe to the SSE stream.
      */
+    @Operation(summary = "Trigger AI budget generation",
+               description = "Starts an async AI generation job. Returns 202 immediately. Use the SSE stream or poll the job status endpoint to track completion.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "202", description = "Generation started"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Financial profile not found"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
     @PostMapping("/generate")
     public ResponseEntity<ApiResponse<GenerateResponse>> generate() {
         UUID userId = userProvider.getCurrentUserId();
@@ -75,9 +89,15 @@ public class AdvisorController {
      * Poll this endpoint to check if Claude has finished.
      * Returns PENDING, COMPLETED, or FAILED with error details.
      */
+    @Operation(summary = "Poll job status", description = "Returns the current status of a generation job (PENDING, COMPLETED, or FAILED).")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Job status returned"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Job not found or does not belong to the user"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
     @GetMapping("/jobs/{jobId}")
     public ResponseEntity<ApiResponse<JobStatusResponse>> getJobStatus(
-            @PathVariable UUID jobId) {
+            @Parameter(description = "ID of the generation job") @PathVariable UUID jobId) {
 
         UUID userId = userProvider.getCurrentUserId();
 
@@ -94,6 +114,11 @@ public class AdvisorController {
      * Returns all templates generated for the authenticated user.
      * Each template includes the full pocket breakdown from Claude.
      */
+    @Operation(summary = "List all generated budget templates for the authenticated user")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Templates returned"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
     @GetMapping("/templates")
     public ResponseEntity<ApiResponse<List<TemplateResponse>>> listTemplates() {
         UUID userId = userProvider.getCurrentUserId();
@@ -112,9 +137,15 @@ public class AdvisorController {
     /**
      * Returns a single template with full pocket breakdown.
      */
+    @Operation(summary = "Get a single budget template by ID")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Template returned"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Template not found or does not belong to the user"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
     @GetMapping("/templates/{id}")
     public ResponseEntity<ApiResponse<TemplateResponse>> getTemplate(
-            @PathVariable UUID id) {
+            @Parameter(description = "ID of the budget template") @PathVariable UUID id) {
 
         UUID userId = userProvider.getCurrentUserId();
 
@@ -131,8 +162,16 @@ public class AdvisorController {
      * Toggles the saved flag on a template.
      * Saved templates appear in the user's bookmarks for later reference.
      */
+    @Operation(summary = "Toggle the saved flag on a template",
+               description = "Saved templates appear in the user's bookmarks. Calling this endpoint toggles the flag.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Template saved or unsaved"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Template not found or does not belong to the user"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
     @PatchMapping("/templates/{id}/save")
-    public ResponseEntity<ApiResponse<Void>> saveTemplate(@PathVariable UUID id) {
+    public ResponseEntity<ApiResponse<Void>> saveTemplate(
+            @Parameter(description = "ID of the budget template") @PathVariable UUID id) {
         UUID userId = userProvider.getCurrentUserId();
 
         BudgetTemplate template = templateRepository
@@ -160,8 +199,16 @@ public class AdvisorController {
      *   const es = new EventSource('/api/v1/advisor/jobs/{jobId}/stream');
      *   es.onmessage = (e) => console.log(JSON.parse(e.data));
      */
+    @Operation(summary = "Subscribe to real-time job completion via SSE",
+               description = "Server-Sent Events stream. The client subscribes immediately after POST /generate. One event is pushed when the job completes or fails, then the connection closes. Timeout: 5 minutes.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "SSE stream opened"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Job not found or does not belong to the user"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
     @GetMapping(value = "/jobs/{jobId}/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter streamJobStatus(@PathVariable UUID jobId) {
+    public SseEmitter streamJobStatus(
+            @Parameter(description = "ID of the generation job") @PathVariable UUID jobId) {
         UUID userId = userProvider.getCurrentUserId();
 
         // Verify ownership before registering the emitter
