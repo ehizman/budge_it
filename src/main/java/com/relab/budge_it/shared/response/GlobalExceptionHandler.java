@@ -1,4 +1,4 @@
-package com.relab.budgetpro.shared.response;
+package com.relab.budge_it.shared.response;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -20,7 +20,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Void>> handleValidation(MethodArgumentNotValidException ex) {
         Map<String, String> fieldErrors = ex.getBindingResult().getFieldErrors().stream()
-                .collect(Collectors.toMap(FieldError::getField, FieldError::getDefaultMessage,
+                .collect(Collectors.toMap(FieldError::getField,  e -> e.getDefaultMessage() != null
+                                ? e.getDefaultMessage()
+                                : "Invalid value",
                         (existing, replacement) -> existing));
         return ResponseEntity.badRequest()
                 .body(ApiResponse.error("VALIDATION_FAILED", "Request validation failed", fieldErrors));
@@ -45,7 +47,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<Void>> handleGeneral(Exception ex) {
+    public ResponseEntity<ApiResponse<Void>> handleGeneric(Exception ex) {
         log.error("Unhandled exception: ", ex);
         return ResponseEntity.internalServerError()
                 .body(ApiResponse.error("INTERNAL_ERROR", "An unexpected error occurred"));

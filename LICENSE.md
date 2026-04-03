@@ -14,4 +14,4 @@ The above copyright notice and this permission notice shall be included in all c
 
 ---
 
-*This license applies to all source code, documentation, and associated files within the ReLab Budget repository.*
+*This license applies to all source code, documentation, and associated files within the *Budge-it!* repository.*

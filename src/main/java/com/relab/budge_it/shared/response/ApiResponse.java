@@ -1,4 +1,4 @@
-package com.relab.budgetpro.shared.response;
+package com.relab.budge_it.shared.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;

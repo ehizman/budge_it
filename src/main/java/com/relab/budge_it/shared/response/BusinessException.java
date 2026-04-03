@@ -1,4 +1,4 @@
-package com.relab.budgetpro.shared.response;
+package com.relab.budge_it.shared.response;
 
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
@@ -44,5 +44,9 @@ public class BusinessException extends RuntimeException {
 
     public static BusinessException forbidden(String code, String message) {
         return new BusinessException(code, message, HttpStatus.FORBIDDEN);
+    }
+
+    public static BusinessException unauthorized(String message) {
+        return new BusinessException("UNAUTHORIZED",message, HttpStatus.UNAUTHORIZED);
     }
 }

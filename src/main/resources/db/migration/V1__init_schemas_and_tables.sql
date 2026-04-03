@@ -18,9 +18,10 @@ CREATE SCHEMA IF NOT EXISTS notification;
 -- ── IDENTITY SCHEMA ──────────────────────────────────────────
 CREATE TABLE identity.users (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    full_name       VARCHAR(255)    NOT NULL,
-    email           VARCHAR(255)    UNIQUE NOT NULL,
-    password_hash   VARCHAR(255)    NOT NULL,
+    first_name      TEXT    NOT NULL,
+    last_name       TEXT    NOT NULL,
+    email           TEXT    UNIQUE NOT NULL,
+    password_hash   TEXT    NOT NULL,
     phone           VARCHAR(20),
     account_number  VARCHAR(20)     UNIQUE NOT NULL,
     status          VARCHAR(20)     NOT NULL DEFAULT 'ACTIVE'
@@ -32,8 +33,8 @@ CREATE TABLE identity.users (
 CREATE TABLE identity.refresh_tokens (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id             UUID        NOT NULL REFERENCES identity.users(id) ON DELETE CASCADE,
-    token_hash          VARCHAR(255) UNIQUE NOT NULL,
-    device_fingerprint  VARCHAR(255),
+    token_hash          TEXT UNIQUE NOT NULL,
+    device_fingerprint  TEXT,
     expires_at          TIMESTAMPTZ NOT NULL,
     revoked             BOOLEAN     NOT NULL DEFAULT FALSE,
     revoked_at          TIMESTAMPTZ,
@@ -72,7 +73,7 @@ CREATE TABLE advisor.budget_templates (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     job_id          UUID        NOT NULL REFERENCES advisor.ai_jobs(id),
     user_id         UUID        NOT NULL,
-    name            VARCHAR(255),
+    name            TEXT,
     description     TEXT,
     pocket_config   JSONB       NOT NULL,
     applied         BOOLEAN     NOT NULL DEFAULT FALSE,
@@ -89,7 +90,7 @@ CREATE TABLE budget.budgets (
     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id     UUID        UNIQUE NOT NULL,
     template_id UUID,
-    name        VARCHAR(255),
+    name        TEXT,
     status      VARCHAR(20) NOT NULL DEFAULT 'ACTIVE'
                     CHECK (status IN ('ACTIVE', 'ARCHIVED')),
     created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -99,7 +100,7 @@ CREATE TABLE budget.budgets (
 CREATE TABLE budget.budget_configurations (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id         UUID        NOT NULL,
-    name            VARCHAR(255) NOT NULL,
+    name            TEXT NOT NULL,
     description     TEXT,
     pocket_snapshot JSONB       NOT NULL,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -112,8 +113,8 @@ CREATE TABLE pocket.pockets (
     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     budget_id   UUID        NOT NULL,
     user_id     UUID        NOT NULL,
-    name        VARCHAR(100) NOT NULL,
-    type        VARCHAR(30)  NOT NULL,
+    name        TEXT NOT NULL,
+    type        TEXT  NOT NULL,
     target    NUMERIC(15,2) NOT NULL DEFAULT 0
         CHECK ( target >= 0 ),
     available     NUMERIC(15,2) NOT NULL DEFAULT 0
@@ -148,10 +149,10 @@ CREATE TABLE wallet.transactions (
     user_id             UUID        NOT NULL,
     type                VARCHAR(10) NOT NULL CHECK (type IN ('CREDIT', 'DEBIT')),
     amount              NUMERIC(15,2) NOT NULL,
-    sender_name         VARCHAR(255),
+    sender_name         TEXT,
     sender_account      VARCHAR(20),
-    sender_bank         VARCHAR(100),
-    bank_reference      VARCHAR(255) UNIQUE,   -- deduplication key (edge case WL-01)
+    sender_bank         TEXT,
+    bank_reference      TEXT UNIQUE,   -- deduplication key (edge case WL-01)
     payment_request_id  UUID,
     pocket_id           UUID,
     note                TEXT,
@@ -168,8 +169,8 @@ CREATE INDEX idx_transactions_ref     ON wallet.transactions(bank_reference);
 CREATE TABLE wallet.payment_requests (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id             UUID        NOT NULL,
-    reference           VARCHAR(50) UNIQUE NOT NULL,
-    label               VARCHAR(255) NOT NULL,
+    reference           TEXT UNIQUE NOT NULL,
+    label               TEXT NOT NULL,
     amount              NUMERIC(15,2), -- NULL = any amount accepted
             CHECK ( amount > 0 ),
     target_pocket_id    UUID, -- NULL = default Spend pocket
@@ -190,7 +191,7 @@ CREATE TABLE recurring.recurring_payments (
     id                      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id                 UUID        NOT NULL,
     pocket_id               UUID        NOT NULL,
-    label                   VARCHAR(255) NOT NULL,
+    label                   TEXT NOT NULL,
     amount                  NUMERIC(15,2) NOT NULL CHECK (amount > 0),
     frequency               VARCHAR(20) NOT NULL
                                 CHECK (frequency IN ('DAILY','WEEKLY','BIWEEKLY','MONTHLY','QUARTERLY','ANNUALLY')),
@@ -215,7 +216,7 @@ CREATE TABLE recurring.recurring_execution_logs (
     recurring_payment_id    UUID        NOT NULL REFERENCES recurring.recurring_payments(id),
     run_date                DATE        NOT NULL,
     status                  VARCHAR(10) NOT NULL CHECK (status IN ('SUCCESS', 'FAILED', 'SKIPPED')),
-    failure_reason          VARCHAR(255),
+    failure_reason          TEXT,
     amount_debited          NUMERIC(15,2),
     pocket_balance_before   NUMERIC(15,2),
     pocket_balance_after    NUMERIC(15,2),
@@ -226,7 +227,7 @@ CREATE TABLE recurring.recurring_execution_logs (
 CREATE TABLE notification.notifications (
     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id     UUID        NOT NULL,
-    title       VARCHAR(255) NOT NULL,
+    title       TEXT NOT NULL,
     body        TEXT        NOT NULL,
     type        VARCHAR(50),
     reference_id UUID,
@@ -240,7 +241,7 @@ CREATE INDEX idx_notifications_user ON notification.notifications(user_id, read)
 CREATE TABLE public.audit_log (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id         UUID        NOT NULL,
-    action          VARCHAR(100) NOT NULL,
+    action          TEXT NOT NULL,
     entity_type     VARCHAR(50),
     entity_id       UUID,
     amount_before   NUMERIC(15,2),
@@ -258,12 +259,11 @@ create table event_publication
     completion_date        timestamp(6) with time zone,
     last_resubmission_date timestamp(6) with time zone,
     publication_date       timestamp(6) with time zone not null,
-    id                     uuid                        not null
-        primary key,
-    event_type             varchar(255)                not null,
-    listener_id            varchar(255)                not null,
-    serialized_event       varchar(255)                not null,
-    status                 varchar(255)
+    id                     uuid                        not null primary key,
+    event_type             TEXT                not null,
+    listener_id            TEXT                not null,
+    serialized_event       TEXT                not null,
+    status                 TEXT
         constraint event_publication_status_check
             check ((status)::text = ANY
         ((ARRAY ['PUBLISHED'::character varying, 'PROCESSING'::character varying, 'COMPLETED'::character varying, 'FAILED'::character varying, 'RESUBMITTED'::character varying])::text[]))

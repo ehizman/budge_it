@@ -1,9 +1,10 @@
-package com.relab.budgetpro.shared.security;
+package com.relab.budge_it.shared.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -18,6 +19,7 @@ import java.util.function.Function;
 
 @Slf4j
 @Service
+@Getter
 public class JwtService {
 
     private final SecretKey signingKey;
@@ -30,10 +32,28 @@ public class JwtService {
         this.accessTokenExpirySeconds = accessTokenExpirySeconds;
     }
 
-    public String generateAccessToken(UserDetails userDetails, UUID userId) {
+    // TODO -- generate and store SSETicket
+    public SSETicket generateAndSaveSSETicket(UUID jobId) {
+        String token = Jwts.builder()
+                .subject(jobId.toString())
+                .claim("type", "SSE")
+                .id(UUID.randomUUID().toString())
+                .issuedAt(Date.from(Instant.now()))
+                .expiration(Date.from(Instant.now().plusSeconds(60L)))
+                .signWith(signingKey)
+                .compact();
+
+        return SSETicket.builder()
+                .jobId(jobId)
+                .token(token)
+                .expiresAt(Instant.now().plusSeconds(60L))
+                .build();
+    }
+
+    public String generateAccessToken(String userId, String subject) {
         return Jwts.builder()
-                .subject(userDetails.getUsername())
-                .claim("userId", userId.toString())
+                .subject(subject)
+                .claim("userId", userId)
                 .claim("type", "ACCESS")
                 .id(UUID.randomUUID().toString())
                 .issuedAt(Date.from(Instant.now()))
@@ -42,8 +62,11 @@ public class JwtService {
                 .compact();
     }
 
-    public String extractUsername(String token) {
+    public String extractSubject(String token) {
         return extractClaim(token, Claims::getSubject);
+    }
+    public String extractType(String token) {
+        return extractClaim(token, claims -> claims.get("type", String.class));
     }
 
     public UUID extractUserId(String token) {
@@ -53,8 +76,18 @@ public class JwtService {
 
     public boolean isTokenValid(String token, UserDetails userDetails) {
         try {
-            final String username = extractUsername(token);
+            final String username = extractSubject(token);
             return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
+        } catch (JwtException e) {
+            log.warn("Invalid JWT token: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean isSSETokenValid(String token, UserDetails userDetails) {
+        try {
+            final String type = extractType(token);
+            return type.equals("SSE") && !isTokenExpired(token);
         } catch (JwtException e) {
             log.warn("Invalid JWT token: {}", e.getMessage());
             return false;
@@ -66,11 +99,25 @@ public class JwtService {
     }
 
     private <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
-        final Claims claims = Jwts.parser()
+        final Claims claims = getClaims(token);
+        return claimsResolver.apply(claims);
+    }
+
+    public boolean isValid(String token) {
+        try {
+            getClaims(token);
+            return true;
+        } catch (JwtException | IllegalArgumentException e) {
+            log.warn("Invalid JWT token: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    private Claims getClaims(String token) {
+        return Jwts.parser()
                 .verifyWith(signingKey)
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
-        return claimsResolver.apply(claims);
     }
 }

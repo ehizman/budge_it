@@ -11,4 +11,4 @@ CREATE INDEX IF NOT EXISTS idx_budget_templates_job_id
 CREATE INDEX IF NOT EXISTS idx_budget_templates_user_id
     ON advisor.budget_templates (user_id, created_at);
 
-DROP INDEX IF EXISTS
+DROP INDEX IF EXISTS idx_budget_templates_user;
