@@ -1,13 +1,9 @@
 package com.relab.budge_it.profile.dto;
 
-import com.relab.budge_it.profile.domain.FinancialProfile.DebtInfo;
-import com.relab.budge_it.profile.domain.FinancialProfile.InvestmentInfo;
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.NotNull;
-
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public final class ProfileDtos {
@@ -27,19 +23,17 @@ public final class ProfileDtos {
 
             String employmentStatus,
 
-            @NotNull(message = "Monthly net income is required")
-            @DecimalMin(value = "0.0", inclusive = false, message = "Income must be greater than zero")
-            BigDecimal monthlyNetIncome,
+            String monthlyNetIncome,
 
-            String expenses,
+            Map<String, Object> monthlyBudget,
 
-            List<DebtInfo> debt,
+            List<Map<String, Object>> debt,
 
-            List<InvestmentInfo> investment,
+            List<Map<String, Object>> investment,
 
             List<String> goals,
 
-            BigDecimal monthlySavingsTarget
+            String monthlySavingsTarget
     ) {}
 
     // ─── Outgoing ─────────────────────────────────────────────────────────────
@@ -52,12 +46,12 @@ public final class ProfileDtos {
             UUID userId,
             String ageRange,
             String employmentStatus,
-            BigDecimal monthlyNetIncome,
-            String expenses,
-            List<DebtInfo> debt,
-            List<InvestmentInfo> investment,
+            String monthlyNetIncome,
+            Map<String, Object> monthlyBudget,
+            List<Map<String, Object>> debt,
+            List<Map<String, Object>> investment,
             List<String> goals,
-            BigDecimal monthlySavingsTarget,
+            String monthlySavingsTarget,
             int version,
             Instant createdAt,
             Instant updatedAt

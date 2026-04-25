@@ -40,7 +40,7 @@ public class AdvisorOrchestrationService {
     private final FinancialProfileService profileService;
     private final ApplicationEventPublisher eventPublisher;
     private final OpenAiChatModel chatModel;
-//    private AnthropicChatModel anthropicChatModel;
+//    private final AnthropicChatModel anthropicChatModel;
     private final ObjectMapper objectMapper;
     private final JwtService jwtService;
     private final SSETicketRepository sseTicketRepository;
@@ -61,6 +61,7 @@ public class AdvisorOrchestrationService {
                - Template 2: Aggressive Savings (maximise savings and investment)
                - Template 3: Debt-First (prioritise debt clearance)
             4. Respond ONLY with a valid JSON array. No explanation, no markdown.
+            5. Amounts relating to money are in Nigerian Naira
             
             JSON format:
             [
@@ -128,7 +129,7 @@ public class AdvisorOrchestrationService {
                         job.getId(), userId, profile.getVersion()));
 
         log.info("AI generation job {} created for user {}", job.getId(), userId);
-        return Map.of("job", job, "sseTicket", sseTicket);
+        return Map.of("job", job, "sseTicket", sseTicket.getToken());
     }
 
     // ─── Step 2: Call AI Model asynchronously ──────────────────────────────────
@@ -155,7 +156,6 @@ public class AdvisorOrchestrationService {
         }
 
         int attempt = 0;
-        String lastError = null;
 
         while (attempt <= MAX_RETRIES) {
             try {
@@ -186,14 +186,13 @@ public class AdvisorOrchestrationService {
                 return;
 
             } catch (Exception e) {
-                lastError = e.getMessage();
                 attempt++;
-                log.warn("AI job {} attempt {} failed: {}", event.jobId(), attempt, lastError);
+                log.warn("AI job {} attempt {} failed: {}", event.jobId(), attempt, e.getMessage());
             }
         }
 
         // All retries exhausted
-        markJobFailed(job, "AI_GENERATION_FAILED", lastError);
+        markJobFailed(job, "SYSTEM FAILURE", "Failed to financial plan");
     }
 
     // ─── Scheduled: stale job cleanup ────────────────────────────────────────

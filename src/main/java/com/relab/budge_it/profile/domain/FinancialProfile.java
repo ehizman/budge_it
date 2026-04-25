@@ -9,6 +9,7 @@ import org.hibernate.type.SqlTypes;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Entity
@@ -40,19 +41,19 @@ public class FinancialProfile {
 
     // JSONB fields — stored as JSON in Postgres, mapped to Java objects
     /**
-     * Monthly expense breakdown — maps to the expenses JSONB column.
+     * Monthly expense breakdown — maps to the monthlyBudget JSONB column.
      */
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "JSONB")
-    private String expenses;
+    @Column(columnDefinition = "JSONB", name = "expenses")
+    private Map<String, Object> monthlyBudget;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "JSONB")
-    private List<DebtInfo> debt;
+    private List<Map<String, Object>> debt;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "JSONB")
-    private List<InvestmentInfo> investment;
+    private List<Map<String, Object>> investment;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "JSONB")
@@ -82,38 +83,4 @@ public class FinancialProfile {
     public enum EmploymentStatus {
         EMPLOYED_FULL_TIME, SELF_EMPLOYED, FREELANCE, STUDENT, UNEMPLOYED
     }
-
-    public enum PaymentFrequency {
-        MONTHLY("monthly"),
-        QUARTERLY("quarterly"),
-        ANNUALLY("annually"),
-        CUSTOM("custom"); // For irregular payment schedules
-
-        public final String frequency;
-
-        PaymentFrequency(String frequency) {
-            this.frequency = frequency;
-        }
-    }
-
-    // ─── Nested JSONB types ───────────────────────────────────────────────────
-    /**
-     * Debt information — maps to the debt JSONB column.
-     */
-    public record DebtInfo(
-            Boolean hasDebt,
-            PaymentFrequency paymentFrequency,
-            BigDecimal amount,
-            List<String> types      // e.g. ["STUDENT_LOAN", "CREDIT_CARD"]
-    ) {}
-
-    /**
-     * Investment information — maps to the investment JSONB column.
-     */
-    public record InvestmentInfo(
-            Boolean invests,
-            PaymentFrequency paymentFrequency,
-            BigDecimal amount,
-            List<String> types      // e.g. ["STOCKS", "CRYPTO", "REAL_ESTATE"]
-    ) {}
 }

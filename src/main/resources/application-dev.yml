@@ -4,10 +4,14 @@ spring:
 
   ai:
     openai:
-      api-key: ${OPEN_AI_KEY}
+      api-key: ${GEMINI_API_KEY}
+      base-url: https://generativelanguage.googleapis.com/v1beta/openai/
+      chat:
+        options:
+          model: gemini-2.0-flash
 
     anthropic:
-      api-key: ${ANTHROPIC_API_KEY}
+      api-key: ${CLAUDE_API_KEY}
 
 app:
   security:

@@ -171,7 +171,7 @@ public class AuthService {
 
     // ─── Private helpers ──────────────────────────────────────────────────────
 
-    private TokenResponse issueTokens(User user, String deviceFingerprint) {
+    private TokenResponse  issueTokens(User user, String deviceFingerprint) {
         // Issue JWT access token
         String accessToken = jwtService.generateAccessToken(user.getId().toString(), user.getEmail());
 

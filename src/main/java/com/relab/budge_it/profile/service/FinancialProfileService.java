@@ -13,6 +13,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -40,12 +41,12 @@ public class FinancialProfileService {
 
         // Map request fields onto the entity
         profile.setAgeRange(request.ageRange());
-        profile.setMonthlyNetIncome(request.monthlyNetIncome());
-        profile.setExpenses(request.expenses());
+        profile.setMonthlyNetIncome(BigDecimal.valueOf(Long.parseLong(request.monthlyNetIncome())));
+        profile.setMonthlyBudget(request.monthlyBudget());
         profile.setDebt(request.debt());
         profile.setInvestment(request.investment());
         profile.setGoals(request.goals());
-        profile.setMonthlySavingsTarget(request.monthlySavingsTarget());
+        profile.setMonthlySavingsTarget(BigDecimal.valueOf(Long.parseLong(request.monthlySavingsTarget())));
         profile.setUpdatedAt(Instant.now());
 
         // Parse employment status safely
@@ -105,12 +106,12 @@ public class FinancialProfileService {
                 p.getUserId(),
                 p.getAgeRange(),
                 p.getEmploymentStatus() != null ? p.getEmploymentStatus().name() : null,
-                p.getMonthlyNetIncome(),
-                p.getExpenses(),
+                p.getMonthlyNetIncome().toPlainString().trim(),
+                p.getMonthlyBudget(),
                 p.getDebt(),
                 p.getInvestment(),
                 p.getGoals(),
-                p.getMonthlySavingsTarget(),
+                p.getMonthlySavingsTarget().toPlainString().trim(),
                 p.getVersion(),
                 p.getCreatedAt(),
                 p.getUpdatedAt()

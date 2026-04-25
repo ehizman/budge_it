@@ -69,14 +69,14 @@ public class AdvisorController {
         UUID userId = userProvider.getCurrentUserId();
         Map<String, Object> pair   = orchestrationService.initiateGeneration(userId);
         AIJob job = (AIJob) pair.get("job");
-        String sseTicket = (String) pair.get("sseTicket");
+        String sseToken = (String) pair.get("sseTicket");
 
         return ResponseEntity.status(HttpStatus.ACCEPTED)
                 .body(ApiResponse.success(
                         new GenerateResponse(
                                 job.getId(),
                                 job.getStatus().name(),
-                                sseTicket,
+                                sseToken,
                                 "Budget generation started. Poll /advisor/jobs/" + job.getId() + " for status."
                         ),
                         "Generation started"

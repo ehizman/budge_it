@@ -2,7 +2,6 @@ package com.relab.budge_it.advisor.domain;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
 
@@ -33,7 +32,6 @@ public class AIJob {
     @Column(name = "profile_version", nullable = false)
     private Integer profileVersion;
 
-    @Size(max = 20)
     @NotNull
     @Enumerated(EnumType.STRING)
     @ColumnDefault("'PENDING'")
@@ -41,7 +39,6 @@ public class AIJob {
     @Column(name = "status", nullable = false, length = 20)
     private JobStatus status = JobStatus.PENDING;
 
-    @Size(max = 100)
     @Column(name = "error_code", length = 100)
     private String errorCode;
 

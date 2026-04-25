@@ -50,7 +50,7 @@ spring:
 logging:
   level:
     root: INFO
-    com.relab.budget: DEBUG
+    com.relab.budge_it: DEBUG
     org.springframework.security: WARN
     org.hibernate.SQL: WARN
   pattern:
@@ -65,5 +65,9 @@ app:
       refresh-token-expiry-days: 30
     webhook:
       relab-mfb-secret: ${WEBHOOK_HMAC_SECRET}
+
+
+server:
+  port: 9090
 
 

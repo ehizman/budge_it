@@ -27,9 +27,7 @@ public final class IdentityDtos {
 
             @NotBlank(message = "Password is required")
             @Size(min = 8, message = "Password must be at least 8 characters")
-            String password,
-
-            String phone
+            String password
     ) {}
 
     public record LoginRequest(
