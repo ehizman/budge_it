@@ -11,6 +11,9 @@ services:
       - "5432:5432"
     volumes:
       - bugdeit_pg_data:/var/lib/postgresql/data
+    networks:
+      budgeit_net:
+
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U relab -d budgeit"]
       interval: 10s
@@ -29,6 +32,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      budgeit_net:
 
   app:
     build:
@@ -36,7 +41,7 @@ services:
       dockerfile: Dockerfile
     container_name: budgeit-app
     env_file:
-      - .env
+      - .env.dev
     environment:
       # Override localhost refs with Docker service names
       DB_HOST: postgres
@@ -50,7 +55,13 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    networks:
+      budgeit_net:
 
 volumes:
   bugdeit_pg_data:
   bugdeit_redis_data:
+
+networks:
+  budgeit_net:
+    driver: bridge
